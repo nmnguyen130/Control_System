@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+multimodal_env/
+
+# Thư mục chứa dữ liệu
+data/*
+experiments/*
+setup.py

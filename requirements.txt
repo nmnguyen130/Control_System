@@ -1,0 +1,8 @@
+torch
+opencv-python
+pandas
+numpy
+mediapipe
+SpeechRecognition
+pyttsx3
+scikit-learn
