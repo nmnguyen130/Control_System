@@ -1,10 +1,8 @@
 import cv2
-from src.handlers.hand_landmark_handler import HandLandmarkHandler
 
 class CameraService:
-    def __init__(self, num_hands=1):
+    def __init__(self):
         self.cap = self.initialize_video_capture(0)
-        self.landmark_handler = HandLandmarkHandler(num_hands)
 
     def initialize_video_capture(self, camera_id=0):
         """
@@ -33,9 +31,6 @@ class CameraService:
         """
         frame = cv2.flip(frame, 1)
         return frame
-
-    def get_landmarks(self, frame, isDraw=True):
-        return self.landmark_handler.extract_landmarks(frame, isDraw)
 
     def release(self):
         self.cap.release()
