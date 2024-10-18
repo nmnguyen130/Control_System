@@ -8,11 +8,10 @@ import torch.nn.functional as F
 class StaticGestureDataset(Dataset):
     def __init__(self, csv_file, label_handler):
         data = pd.read_csv(csv_file)
-        self.label_handler = label_handler
 
         # Normalize features and encode labels
         self.features = data.iloc[:, :-1].values
-        self.labels = data['label'].apply(self.label_handler.get_static_value_by_gesture).values
+        self.labels = data['label'].apply(label_handler.get_static_value_by_gesture).values
 
         # Convert to tensors
         self.features = torch.tensor(self.features, dtype=torch.float32)
@@ -30,7 +29,7 @@ class ResidualBlock(nn.Module):
         super(ResidualBlock, self).__init__()
         self.fc = nn.Sequential(
             nn.Linear(in_features, in_features),
-            nn.LayerNorm(in_features),
+            nn.BatchNorm1d(in_features),
             nn.ReLU(),
             nn.Dropout(0.3)
         )

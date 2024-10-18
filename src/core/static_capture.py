@@ -25,7 +25,7 @@ def capture_static_gesture(csv_output_path):
     current_label = None
 
     label_handler = LabelHandler(static_label_path='data/hand_gesture/static_labels.csv')
-    label_map = {str(i + 1): gesture for i, gesture in enumerate(label_handler.static_labels.keys())}
+    label_map = {str(i): gesture for i, gesture in enumerate(label_handler.static_labels.keys())}
     
     while True:
         frame = camera_service.capture_frame()

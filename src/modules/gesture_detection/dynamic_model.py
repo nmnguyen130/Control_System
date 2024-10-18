@@ -9,11 +9,10 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 class DynamicGestureDataset(Dataset):
     def __init__(self, csv_file, label_handler):
         data = pd.read_csv(csv_file)
-        self.label_handler = label_handler
         
         frames = data['frame'].values
         features = data.drop(columns=['frame', 'label']).values
-        labels = data['label'].apply(self.label_handler.get_dynamic_value_by_gesture).values
+        labels = data['label'].apply(label_handler.get_dynamic_value_by_gesture).values
 
         # Group sequences by label change or end of data
         self.samples, self.labels, self.lengths = [], [], []
@@ -35,7 +34,6 @@ class DynamicGestureDataset(Dataset):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        # Return the sequence, label, and its length
         return self.samples[idx], self.labels[idx], self.lengths[idx]
     
 # 2. Attention Mechanism
@@ -43,10 +41,12 @@ class Attention(nn.Module):
     def __init__(self, hidden_size):
         super(Attention, self).__init__()
         self.attention = nn.Linear(hidden_size, 1)
+        self.dropout = nn.Dropout(0.2)
 
     def forward(self, lstm_output):
         # lstm_output: (batch_size, seq_len, 2 * hidden_size)
         attn_weights = torch.softmax(self.attention(lstm_output), dim=1)  # (batch_size, seq_len, 1)
+        attn_weights = self.dropout(attn_weights)
         context = torch.sum(attn_weights * lstm_output, dim=1)  # Weighted sum
         return context
 
@@ -54,17 +54,32 @@ class Attention(nn.Module):
 class DynamicGestureModel(nn.Module):
     def __init__(self, num_classes):
         super(DynamicGestureModel, self).__init__()
-        self.lstm = nn.LSTM(input_size=63, hidden_size=128, num_layers=2, 
-                            batch_first=True, bidirectional=True)
-        self.attention = Attention(128 * 2)  # Bi-directional LSTM có hidden size gấp đôi
-        self.fc = nn.Linear(128 * 2, num_classes)
+        self.lstm1 = nn.LSTM(input_size=63, hidden_size=512, num_layers=1, 
+                             batch_first=True, bidirectional=True)
+        self.lstm2 = nn.LSTM(input_size=512 * 2, hidden_size=256, num_layers=1, 
+                             batch_first=True, bidirectional=True)
+        self.lstm3 = nn.LSTM(input_size=256 * 2, hidden_size=128, num_layers=1, 
+                             batch_first=True, bidirectional=True)
+        self.attention = Attention(128 * 2)  # Bi-LSTM nhân đôi số hidden units do bidirectional
+        # Ba lớp fully connected
+        self.fc = nn.Sequential(
+            nn.Linear(256, 128), nn.ReLU(),
+            nn.Linear(128, 64), nn.ReLU(),
+            nn.Linear(64, num_classes)
+        )
 
     def forward(self, x, lengths):
         # Pack và xử lý chuỗi có độ dài khác nhau
-        packed_input = pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)
-        packed_output, (h_n, _) = self.lstm(packed_input)
-        lstm_output, _ = pad_packed_sequence(packed_output, batch_first=True)
+        x = self._lstm_forward(x, lengths, self.lstm1)
+        x = self._lstm_forward(x, lengths, self.lstm2)
+        x = self._lstm_forward(x, lengths, self.lstm3)
 
-        # Sử dụng Attention để tạo context vector
-        context = self.attention(lstm_output)
+        # Tính attention và truyền qua các lớp fully connected
+        context = self.attention(x)
         return self.fc(context)
+    
+    def _lstm_forward(self, x, lengths, lstm):
+        packed = pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)
+        packed_output, _ = lstm(packed)
+        output, _ =  pad_packed_sequence(packed_output, batch_first=True)
+        return output

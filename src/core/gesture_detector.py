@@ -1,7 +1,4 @@
 import cv2
-import numpy as np
-import torch
-import torch.nn.functional as F
 from src.services.camera_service import CameraService
 from src.services.hand_gesture_service import HandGestureService
 from src.handlers.hand_detect_handler import HandDetectHandler
@@ -23,8 +20,8 @@ def detect_gesture():
             break
 
         hands, _ = hand_handler.find_hands(frame, isDraw=True)
-        
         landmarks_list = [hand["lmList"] for hand in hands]
+        
         for landmarks in landmarks_list:
             # Static gesture prediction
             _, gesture_name_static = hand_gesture_service.predict_static(landmarks)
@@ -32,7 +29,7 @@ def detect_gesture():
 
             # Dynamic gesture processing
             _, gesture_name_dynamic = hand_gesture_service.predict_dynamic(landmarks)
-            if gesture_name_dynamic:
+            if gesture_name_dynamic is not None:
                 cv2.putText(frame, f'Dynamic Gesture: {gesture_name_dynamic}', (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
         # Hiển thị khung hình lên cửa sổ camera

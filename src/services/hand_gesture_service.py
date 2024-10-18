@@ -9,35 +9,39 @@ class GestureManager:
     def __init__(self, lstm_model, sequence_length=30, threshold=0.05):
         self.lstm_model = lstm_model
         self.threshold = threshold  # Ngưỡng xác định cử chỉ động
-
-        # Mảng để phát hiện động và lưu chuỗi
-        self.temp_points = None  # Lưu khung tạm thời để kiểm tra động
-        self.dynamic_gesture = []  # Chuỗi cử chỉ động
         self.sequence_length = sequence_length  # Kích thước chuỗi động tối đa
 
+        # Mảng để phát hiện động và lưu chuỗi
+        self.dynamic_gesture = []
         self.gesture_active = False  # Trạng thái chuỗi động
 
-    def is_dynamic_gesture(self, previous_points, current_points):
-        """Kiểm tra nếu cử chỉ là động dựa trên khoảng cách."""
-        distances = np.linalg.norm(current_points - previous_points, axis=1)
-        return np.any(distances >= self.threshold)
+    def is_dynamic_gesture(self, prev_points, curr_points):
+        """Kiểm tra cử chỉ động bằng cách so sánh khoảng cách"""
+        prev_points_reshaped = prev_points.reshape(-1, 3)
+        curr_points_reshaped = curr_points.reshape(-1, 3)
+        
+        euclidean_dist = np.linalg.norm(curr_points_reshaped - prev_points_reshaped, axis=1)
+        return np.any(euclidean_dist >= self.threshold)
 
-    def process_frame(self, current_points):
-        if self.temp_points is not None:
-            if self.is_dynamic_gesture(self.temp_points, current_points):
-                self.dynamic_gesture.append(current_points)
+    def process_frame(self, curr_points):
+        if not self.dynamic_gesture:
+            self.dynamic_gesture.append(curr_points)
+            return None
 
-                if not self.gesture_active:
-                    self.start_gesture()
+        if self.is_dynamic_gesture(self.dynamic_gesture[-1], curr_points):
+            if not self.gesture_active:
+                self.start_gesture()
+            self.dynamic_gesture.append(curr_points)
+            
+            if len(self.dynamic_gesture) > self.sequence_length:
+                self.dynamic_gesture.pop(0)  # Loại khung cũ nhất
 
-                if len(self.dynamic_gesture) == self.sequence_length:
-                    return self.end_gesture()
-            else:
-                if len(self.dynamic_gesture) > 0:
-                    return self.end_gesture()
+            if len(self.dynamic_gesture) >= self.sequence_length // 2:
+                return self.process_dynamic_gesture()
 
-        # Cập nhật khung hiện tại cho lần xử lý sau
-        self.temp_points = current_points
+        else:  # Nếu không còn động
+            if self.gesture_active:
+                return self.end_gesture()  # Kết thúc khi không còn chuyển động
         return None
 
     def start_gesture(self):
@@ -48,9 +52,9 @@ class GestureManager:
         print("Cử chỉ động kết thúc.")
         self.gesture_active = False
 
-        gesture_index = self.process_dynamic_gesture()  # Process the gesture and get index
-        self.dynamic_gesture.clear()  # Reset the list
-        return gesture_index  # Return the gesture index
+        gesture_index = self.process_dynamic_gesture()
+        self.dynamic_gesture.clear()  # Xóa chuỗi sau khi xử lý
+        return gesture_index
 
     def process_dynamic_gesture(self):
         input_tensor = torch.cat(self.dynamic_gesture, dim=0).unsqueeze(0)  # Shape: (1, seq_len, 63)
