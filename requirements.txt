@@ -1,8 +1,11 @@
-torch
+mediapipe
 opencv-python
+scikit-learn
 pandas
 numpy
-mediapipe
+torch
+tqdm
 SpeechRecognition
 pyttsx3
-scikit-learn
+pyautogui
+pyaudio

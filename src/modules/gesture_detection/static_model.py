@@ -23,7 +23,7 @@ class StaticGestureDataset(Dataset):
     def __getitem__(self, idx):
         return self.features[idx], self.labels[idx]
 
-# 2. Residual Block: Thêm kết nối tắt (skip connection)
+# 2. Residual Block: Tạo vector embedding với residual blocks
 class ResidualBlock(nn.Module):
     def __init__(self, in_features):
         super(ResidualBlock, self).__init__()
@@ -31,13 +31,13 @@ class ResidualBlock(nn.Module):
             nn.Linear(in_features, in_features),
             nn.BatchNorm1d(in_features),
             nn.ReLU(),
-            nn.Dropout(0.3)
+            nn.Dropout(0.2)
         )
 
     def forward(self, x):
         return x + self.fc(x)  # Kết nối tắt (skip connection)
 
-# 3. Embedding Model: Tạo vector embedding với residual blocks
+# 3. Embedding Model: Trích xuất embedding với khối Residual
 class EmbeddingModel(nn.Module):
     def __init__(self):
         super(EmbeddingModel, self).__init__()
@@ -53,7 +53,7 @@ class EmbeddingModel(nn.Module):
         x = self.res_block2(x)
         return x
     
-# 3. Classification Model: Phân loại dựa trên vector embedding
+# 4. Classification Model: Mô hình phân loại với Dropout để tránh overfitting
 class ClassificationModel(nn.Module):
     def __init__(self, num_classes):
         super(ClassificationModel, self).__init__()
@@ -72,7 +72,9 @@ class StaticGestureModel(nn.Module):
         super(StaticGestureModel, self).__init__()
         self.embedding = EmbeddingModel()
         self.classifier = ClassificationModel(num_classes)
+        self.dropout = nn.Dropout(0.5)
 
     def forward(self, x):
         embeddings = self.embedding(x)
-        return self.classifier(embeddings)
+        x = self.dropout(embeddings)
+        return self.classifier(x)

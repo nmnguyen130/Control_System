@@ -58,18 +58,17 @@ class GestureManager:
 
     def process_dynamic_gesture(self):
         input_tensor = torch.cat(self.dynamic_gesture, dim=0).unsqueeze(0)  # Shape: (1, seq_len, 63)
-        lengths = torch.tensor([input_tensor.size(1)])  # Length of the sequence
 
         with torch.no_grad():
-            output = self.lstm_model(input_tensor, lengths)
+            output = self.lstm_model(input_tensor)
             gesture_index = torch.argmax(output.data, dim=1).item()
             return gesture_index
 
 class HandGestureService:
-    def __init__(self, static_model_path, dynamic_model_path, static_label_path, dynamic_label_path, device='cpu'):
+    def __init__(self, static_model_path, dynamic_model_path, label_handler, device='cpu'):
         self.device = device
+        self.label_handler = label_handler
 
-        self.label_handler = LabelHandler(static_label_path, dynamic_label_path)
         self.static_model = self.load_model(static_model_path, StaticGestureModel(len(self.label_handler.static_labels)))
         self.dynamic_model = self.load_model(dynamic_model_path, DynamicGestureModel(len(self.label_handler.dynamic_labels)))
 

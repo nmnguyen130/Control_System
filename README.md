@@ -12,6 +12,7 @@ Dự án Multi-Modal Control System là một hệ thống tích hợp nhiều p
   - Thao tác copy/paste.
 - **Điều khiển bằng giọng nói (Voice Control)**:
   - Nhận diện và ánh xạ lệnh giọng nói thành hành động.
+  - Phân tích ngữ nghĩa
   - Thao tác hệ thống (mở/đóng ứng dụng, chuyển đổi cửa sổ).
 
 ## Phát Triển Module Chính
@@ -24,6 +25,13 @@ Dự án Multi-Modal Control System là một hệ thống tích hợp nhiều p
 ### Module Ánh Xạ Cử Chỉ -> Hành Động (Gesture-to-Action Mapping)
 
 - Định nghĩa hành vi của hệ thống dựa trên cử chỉ (VD: nắm tay để di chuyển chuột, giơ ngón cái để click chuột).
+
+### Module Nhận Diện Giọng Nói (Voice Recognition Module)
+
+- Nhận tín hiệu âm thanh: Ghi âm và xử lý tín hiệu âm thanh từ microphone.
+- Mô hình học sâu: Sử dụng mô hình học sâu (như RNN hoặc Transformer) để nhận diện lệnh giọng nói từ âm thanh.
+- Phân loại lệnh: Xây dựng logic để phân loại các lệnh và ánh xạ chúng đến các chức năng cụ thể trong hệ thống.
+- Tương tác người dùng: Cung cấp hướng dẫn và thông báo bằng giọng nói cho người dùng về các thao tác và trạng thái của hệ thống.
 
 ### Module Điều Khiển Hệ Thống (System Control Module)
 
@@ -52,6 +60,8 @@ Dự án Multi-Modal Control System là một hệ thống tích hợp nhiều p
 - **OpenCV**: Tiền xử lý hình ảnh và phát hiện đặc trưng.
 - **MediaPipe**: Thu thập điểm landmarks của bàn tay.
 - **Flask**: Framework để xây dựng API và giao diện người dùng.
+- **SpeechRecognition**: Thư viện để nhận diện giọng nói từ âm thanh.
+- **pydub**: Thư viện để xử lý âm thanh, bao gồm cắt, ghép và chuyển đổi định dạng âm thanh.
 
 2. Ghi các thư viện đã cài đặt vào requirements.txt
    ```bash
@@ -71,3 +81,46 @@ Dự án Multi-Modal Control System là một hệ thống tích hợp nhiều p
    ```bash
    pip install -r requirements.txt
    ```
+
+## Cấu Trúc Thư Mục Dự Án Multi-Modal Control System
+
+control_system/
+│
+├── multimodal_env/ # Thư mục môi trường ảo
+│
+├── data/ # Thư mục dataset
+│
+├── trained_data/ # Thư mục chứa dữ liệu đã huấn luyện
+│
+├── src/ # Thư mục mã nguồn
+│ ├── **init**.py
+│ ├── main.py
+│ ├── config/ # Thư mục cấu hình
+│ │ ├── **init**.py
+│ │
+│ ├── core/ # Các thành phần chính của hệ thống
+│ │ ├── **init**.py
+│ │
+│ ├── handlers/ # Xử lý các sự kiện và yêu cầu
+│ │ ├── **init**.py
+│ │
+│ ├── modules/ # Các module chức năng
+│ │ ├── gesture_detection/ # Module phát hiện cử chỉ
+│ │ │ ├── **init**.py
+│ │ │
+│ │ ├── voice_recognition/ # Module nhận diện giọng nói
+│ │ │ ├── **init**.py
+│ │ │
+│ │ ├── system_control/ # Module điều khiển hệ thống
+│ │ │ ├── **init**.py
+| |
+│ ├── services/ # Dịch vụ hỗ trợ cho hệ thống
+│ │ ├── **init**.py
+│ │ ├── settings.py # Cấu hình cho hệ thống
+│ │
+│ ├── utils/ # Tiện ích hỗ trợ
+│ │ ├── **init**.py
+│
+├── requirements.txt # Danh sách các thư viện cần thiết
+├── README.md # Tài liệu dự án
+└── .gitignore # Các tệp không cần theo dõi

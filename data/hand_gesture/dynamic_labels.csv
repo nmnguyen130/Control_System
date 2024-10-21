@@ -1,0 +1,7 @@
+gesture,value,control
+wave,0,Initiate Action
+pinch_open,1,Zoom In
+pinch_close,2,Zoom Out
+scroll_up,3,Scroll Up
+scroll_down,4,Scroll Down
+click,5,Select/Activate

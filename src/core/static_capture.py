@@ -25,8 +25,10 @@ def capture_static_gesture(csv_output_path):
     current_label = None
 
     label_handler = LabelHandler(static_label_path='data/hand_gesture/static_labels.csv')
-    label_map = {str(i): gesture for i, gesture in enumerate(label_handler.static_labels.keys())}
+    label_map = {str(i + 1): gesture for i, gesture in enumerate(label_handler.static_labels.keys())}
     
+    save_count = 0
+
     while True:
         frame = camera_service.capture_frame()
         if frame is None:
@@ -46,6 +48,7 @@ def capture_static_gesture(csv_output_path):
         # Nhấn phím số (1-7) để chọn nhãn cho dữ liệu
         if chr(key) in label_map:
             current_label = label_map[chr(key)]
+            save_count = 0
             print(f"Nhãn hiện tại: {current_label}")
 
         # Nhấn 's' để chụp ảnh và ghi dữ liệu
@@ -55,9 +58,12 @@ def capture_static_gesture(csv_output_path):
                 for landmarks in landmarks_list:
                     landmarks = landmarks.tolist()
                     landmarks.append(current_label)
+
+                    save_count += 1
+
                     # Save to DataFrame
                     df = pd.concat([df, pd.DataFrame([landmarks], columns=df.columns)], ignore_index=True)
-                    print(f"Data saved for label: {current_label}")
+                    print(f"Data saved for label: {current_label} (Count: {save_count})")
 
         # Nhấn 'q' để thoát
         elif key == ord('q'):

@@ -1,0 +1,8 @@
+gesture,value,control
+open_hand,0,Start Interaction
+fist,1,End Interaction
+thumbs_up,2,Confirm Selection
+thumbs_down,3,Reject Selection
+peace,4,Hold State
+pointing,5,Select Object
+double_finger_point,6,Drag Object

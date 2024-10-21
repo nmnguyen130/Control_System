@@ -1,24 +1,61 @@
-import cv2
-from services.camera_service import CameraService
-from handlers.label_handler import LabelHandler
+import tkinter as tk
+from tkinter import scrolledtext
+# from core.voice_assistant import VoiceAssistant
+from core.gesture_detector import GestureDetector
+import threading
 
-def main():
-    camera_service = CameraService(num_hands=2)
-    label_handler = LabelHandler('data/hand_gesture/labels.csv')
+class AssistantApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Multi-Modal Voice and Gesture Assistant")
+        self.root.geometry("400x500")
 
-    while True:
-        frame = camera_service.capture_frame()
-        if frame is None:
-            print("Error: No frame captured.")
-            break
+        # Text area for displaying chat
+        self.text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, state='disabled', font=("Arial", 12))
+        self.text_area.grid(row=0, column=0, padx=10, pady=10, sticky='nsew')
 
-        landmarks_list = camera_service.get_landmarks(frame)
-        cv2.imshow('Gesture Detection', frame)
+        # Entry box for user input
+        self.entry = tk.Entry(root, font=("Arial", 14))
+        self.entry.grid(row=1, column=0, padx=10, pady=10, sticky='ew')
+        self.entry.bind("<Return>", self.on_enter)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        # Start Button for voice command
+        start_voice_button = tk.Button(root, text="Start Voice Command", command=self.start_voice_thread, font=("Arial", 12))
+        start_voice_button.grid(row=2, column=0, pady=10)
 
-    camera_service.release()
+        # Start Button for gesture detection
+        start_gesture_button = tk.Button(root, text="Start Gesture Detection", command=self.start_gesture_thread, font=("Arial", 12))
+        start_gesture_button.grid(row=3, column=0, pady=10)
 
-if __name__ == '__main__':
-    main()
+        # Configure grid weights
+        root.grid_rowconfigure(0, weight=1)
+        root.grid_columnconfigure(0, weight=1)
+
+        # Khởi tạo các module
+        self.gesture_detection = GestureDetector(self.add_message)
+        # self.voice_assistant = VoiceAssistant(self.add_message)
+
+    def add_message(self, speaker, message):
+        self.text_area.config(state='normal')
+        self.text_area.insert(tk.END, f"{speaker}: {message}\n")
+        self.text_area.yview(tk.END)
+        self.text_area.config(state='disabled')
+
+    def on_enter(self, event):
+        user_input = self.entry.get()
+        if user_input:
+            self.add_message("You", user_input)
+            response = self.voice_assistant.respond(user_input)
+            self.add_message("NL", response)
+            self.entry.delete(0, tk.END)
+
+    def start_voice_thread(self):
+        threading.Thread(target=self.voice_assistant.start_voice_command, daemon=True).start()
+
+    def start_gesture_thread(self):
+        threading.Thread(target=self.gesture_detection.start_detection, daemon=True).start()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = AssistantApp(root)
+    root.mainloop()
