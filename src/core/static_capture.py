@@ -5,7 +5,7 @@ from src.utils.file_utils import create_directory_if_not_exists
 from src.utils.data_utils import initialize_dataframe, save_dataframe_to_csv
 from src.services.camera_service import CameraService
 from src.handlers.hand_detect_handler import HandDetectHandler
-from src.handlers.label_handler import LabelHandler
+from src.handlers.gesture_label_handler import GestureLabelHandler
 
 def capture_static_gesture(csv_output_path):
     """
@@ -17,16 +17,16 @@ def capture_static_gesture(csv_output_path):
     create_directory_if_not_exists(os.path.dirname(csv_output_path))
 
     camera_service = CameraService()
-    hand_handler = HandDetectHandler(num_hands=1)
+    hand_handler = HandDetectHandler(num_hands=2)
 
     # Tạo dataframe để lưu điểm đặc trưng
     columns = [f'point_{i}_{axis}' for i in range(1, 22) for axis in ['x', 'y', 'z']] + ['label']  # Tổng cộng 64 cột
     df = initialize_dataframe(columns, csv_output_path)
     current_label = None
 
-    label_handler = LabelHandler(static_label_path='data/hand_gesture/static_labels.csv')
-    label_map = {str(i + 1): gesture for i, gesture in enumerate(label_handler.static_labels.keys())}
-    
+    label_handler = GestureLabelHandler(static_label_path='data/hand_gesture/static_labels.csv')
+    label_map = {str(i + 1): gesture for i, gesture in enumerate(label_handler.get_all_static_gestures())}
+    print(label_map)
     save_count = 0
 
     while True:

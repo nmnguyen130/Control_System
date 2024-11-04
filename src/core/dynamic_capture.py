@@ -7,7 +7,7 @@ from src.utils.file_utils import create_directory_if_not_exists
 from src.utils.data_utils import initialize_dataframe, save_dataframe_to_csv
 from src.services.camera_service import CameraService
 from src.handlers.hand_detect_handler import HandDetectHandler
-from src.handlers.label_handler import LabelHandler
+from src.handlers.gesture_label_handler import GestureLabelHandler
 
 class DataCollector(threading.Thread):
     def __init__(self, camera_service, hand_handler, data_queue, current_label, sequence_length, no_sequences):
@@ -77,8 +77,8 @@ def capture_dynamic_gesture(csv_output_path):
     df = initialize_dataframe(columns, csv_output_path)
     current_label = None
 
-    label_handler = LabelHandler(dynamic_label_path='data/hand_gesture/dynamic_labels.csv')
-    label_map = {str(i + 1): gesture for i, gesture in enumerate(label_handler.dynamic_labels.keys())}
+    label_handler = GestureLabelHandler(dynamic_label_path='data/hand_gesture/dynamic_labels.csv')
+    label_map = {str(i + 1): gesture for i, gesture in enumerate(label_handler.get_all_dynamic_gestures())}
 
     no_sequences = 1
     sequence_length = 30

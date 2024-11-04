@@ -4,6 +4,7 @@ scikit-learn
 pandas
 numpy
 torch
+torchaudio
 tqdm
 SpeechRecognition
 pyttsx3

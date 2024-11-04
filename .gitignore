@@ -6,4 +6,5 @@ __pycache__/
 multimodal_env/
 
 # Thư mục chứa dữ liệu
+data/*
 trained_data/*

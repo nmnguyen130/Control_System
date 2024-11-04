@@ -35,19 +35,35 @@ class DynamicGestureDataset(Dataset):
     def __getitem__(self, idx):
         return self.samples[idx], self.labels[idx]
 
-# 2. Dynamic Gesture Model LSTM
+# 2. Dynamic Gesture Model with Attention and Residual Connections
 class DynamicGestureModel(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, input_dim=63, hidden_dim=128, num_layers=2, dropout=0.5):
         super(DynamicGestureModel, self).__init__()
-        self.lstm = nn.LSTM(63, 256, num_layers=2, batch_first=True, dropout=0.3)
-        self.bn = nn.BatchNorm1d(256)  # Batch Normalization sau LSTM
-        self.fc = nn.Linear(256, num_classes)
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+
+        # Unidirectional LSTM
+        self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout)
+        
+        # Fully connected layers
+        self.fc1 = nn.Linear(hidden_dim, hidden_dim // 2)
+        self.fc2 = nn.Linear(hidden_dim // 2, num_classes)
+        
+        # Dropout and activation
+        self.dropout = nn.Dropout(dropout)
+        self.relu = nn.ReLU()
 
     def forward(self, x):
-        lstm_out, (h_n, c_n) = self.lstm(x) #  lstm_out: (batch_size, seq_len, hidden_dim)
-
-        # Global Max Pooling trên toàn bộ chuỗi
-        pooled_out, _ = torch.max(lstm_out, dim=1)  # (batch_size, hidden_dim)
-        pooled_out = self.bn(pooled_out)  # Batch Normalization
-
-        return self.fc(pooled_out)
+        # LSTM layer
+        lstm_out, _ = self.lstm(x)
+        
+        # Take the output from the last time step
+        last_time_step = lstm_out[:, -1, :]
+        
+        # Apply dropout and fully connected layers
+        out = self.dropout(last_time_step)
+        out = self.relu(self.fc1(out))
+        out = self.dropout(out)
+        out = self.fc2(out)
+        
+        return out
