@@ -99,7 +99,12 @@ def setup_static_model(label_handler):
     static_csv_file = 'data/hand_gesture/static_data.csv'
     static_dataset = StaticGestureDataset(static_csv_file, label_handler=label_handler)
     
-    train_data, val_data = train_test_split(static_dataset, test_size=0.2, random_state=42)
+    train_data, val_data = train_test_split(
+        static_dataset, 
+        test_size=0.2,
+        random_state=42,
+        stratify=[label for _, label in static_dataset]
+    )
     train_loader = DataLoader(train_data, batch_size=32, shuffle=True)
     val_loader = DataLoader(val_data, batch_size=32, shuffle=False)
 
@@ -116,7 +121,12 @@ def setup_dynamic_model(label_handler):
     dynamic_csv_file = 'data/hand_gesture/dynamic_data.csv'
     dynamic_dataset = DynamicGestureDataset(dynamic_csv_file, label_handler=label_handler)
     
-    train_data, val_data = train_test_split(dynamic_dataset, test_size=0.2, random_state=42)
+    train_data, val_data = train_test_split(
+        dynamic_dataset, 
+        test_size=0.2,
+        random_state=42,
+        stratify=[label for _, label in dynamic_dataset]
+    )
     train_loader = DataLoader(train_data, batch_size=16, shuffle=True)
     val_loader = DataLoader(val_data, batch_size=16, shuffle=False)
 
@@ -134,8 +144,8 @@ def main():
                                  'data/hand_gesture/dynamic_labels.csv')
     
     # Setup and train static model
-    # static_trainer = GestureTrainer(*setup_static_model(label_handler))
-    # static_trainer.train(num_epochs=50, save_path='trained_data/static_gesture_model.pth')
+    static_trainer = GestureTrainer(*setup_static_model(label_handler))
+    static_trainer.train(num_epochs=50, save_path='trained_data/static_gesture_model.pth')
 
     # Setup and train dynamic model
     dynamic_trainer = GestureTrainer(*setup_dynamic_model(label_handler))

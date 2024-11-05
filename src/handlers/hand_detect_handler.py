@@ -5,13 +5,13 @@ import mediapipe as mp
 class HandDetectHandler:
     def __init__(self, static_mode=False, num_hands=2, min_detection_confidence=0.5, min_tracking_confidence=0.5):
         """
-        Khởi tạo HandDetectHandler với các tham số đã chỉ định.
+        Initialize HandDetectHandler with specified parameters.
 
-        :param static_mode: Nếu True, phát hiện được thực hiện trên từng hình ảnh (chậm hơn).
-        :param max_hands: Số lượng bàn tay tối đa để phát hiện.
-        :param model_complexity: Độ phức tạp của mô hình đặc trưng bàn tay: 0 hoặc 1.
-        :param detection_confidence: Ngưỡng độ tự tin phát hiện tối thiểu.
-        :param min_tracking_confidence: Ngưỡng độ tự tin theo dõi tối thiểu.
+        Args:
+            static_mode (bool): If True, detection is performed on each image (slower)
+            num_hands (int): Maximum number of hands to detect
+            min_detection_confidence (float): Minimum detection confidence threshold
+            min_tracking_confidence (float): Minimum tracking confidence threshold
         """
         self.static_mode = static_mode
         self.num_hands = num_hands
@@ -26,15 +26,20 @@ class HandDetectHandler:
             min_tracking_confidence=self.min_tracking_confidence
         )
         self.mp_drawing = mp.solutions.drawing_utils
-        self.tip_ids = [4, 8, 12, 16, 20]  # IDs cho các đầu ngón tay
+        
+        # Finger tip landmark indices
+        self.tip_ids = [4, 8, 12, 16, 20]  # Thumb, Index, Middle, Ring, Pinky
 
     def find_hands(self, frame, isDraw=True):
         """
-        Phát hiện bàn tay trong một frame.
+        Detect hands in a frame.
 
-        :param frame: Hình ảnh để tìm bàn tay trong đó.
-        :param isDraw: Nếu True, vẽ kết quả lên hình ảnh.
-        :return: Tuple chứa thông tin bàn tay được phát hiện và hình ảnh với hoặc không có vẽ.
+        Args:
+            frame: Image frame to detect hands in
+            isDraw (bool): If True, draw landmarks and connections on the frame
+
+        Returns:
+            tuple: (List of detected hands info, Processed frame)
         """
         img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         self.results = self.hands.process(img_rgb)
@@ -51,36 +56,52 @@ class HandDetectHandler:
         return all_hands, frame
     
     def _extract_hand_info(self, hand_lms, hand_type):
-        """Trích xuất các điểm đặc trưng bàn tay và thông tin hộp giới hạn."""
-
+        """
+        Extract hand landmarks and information.
+        
+        Args:
+            hand_lms: Hand landmarks from MediaPipe
+            hand_type: Hand type classification from MediaPipe
+            
+        Returns:
+            dict: Hand information including landmarks and hand type
+        """
+        # Convert landmarks to numpy array and flatten
         lm_list = np.array([[lm.x, lm.y, lm.z] for lm in hand_lms.landmark]).flatten()
-
-        # Xác định kiểu tay
         hand_type_label = hand_type.classification[0].label
 
         return {"lmList": lm_list, "type": hand_type_label}
     
     def _draw_hand(self, frame, hand_lms):
-        """Vẽ các điểm đặc trưng bàn tay và hộp giới hạn lên hình ảnh."""
+        """
+        Draw hand landmarks and connections on frame.
+        
+        Args:
+            frame: Image frame to draw on
+            hand_lms: Hand landmarks to draw
+        """
         self.mp_drawing.draw_landmarks(frame, hand_lms, self.mp_hands.HAND_CONNECTIONS)
 
     def fingers_up(self, my_hand):
         """
-        Đếm số ngón tay đang mở cho một bàn tay nhất định.
+        Count number of raised fingers for a given hand.
 
-        :param my_hand: Dict chứa thông tin bàn tay.
-        :return: Danh sách chỉ ra ngón tay nào đang mở.
+        Args:
+            my_hand (dict): Hand information containing landmarks and type
+
+        Returns:
+            list: Binary list indicating raised fingers [thumb, index, middle, ring, pinky]
         """
         fingers = []
         my_lm_list = my_hand["lmList"]
 
-        # Phát hiện ngón cái
+        # Check thumb based on hand type (different logic for left/right hand)
         if my_hand["type"] == "Right":
             fingers.append(1 if my_lm_list[self.tip_ids[0]][0] > my_lm_list[self.tip_ids[0] - 1][0] else 0)
         else:
             fingers.append(1 if my_lm_list[self.tip_ids[0]][0] < my_lm_list[self.tip_ids[0] - 1][0] else 0)
 
-        # Phát hiện cho bốn ngón tay còn lại
+        # Check other fingers by comparing y coordinates of tip and second joint
         for id in range(1, 5):
             fingers.append(1 if my_lm_list[self.tip_ids[id]][1] < my_lm_list[self.tip_ids[id] - 2][1] else 0)
 

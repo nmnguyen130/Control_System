@@ -1,4 +1,5 @@
 import os
+import time
 
 MODULES = {
     '1': 'src.main',
@@ -26,6 +27,10 @@ def run_module(choice):
     else:
         print("Invalid choice!")
 
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+    time.sleep(0.1)
+
 def main():
     while True:
         print_modules()
@@ -37,9 +42,11 @@ def main():
             
         run_module(choice)
         
-        print("\nPress Enter to continue...")
-        input()
-        os.system('cls' if os.name == 'nt' else 'clear')
+        print("\nPress any key to exit or Enter to continue...")
+        key = input()
+        if key:
+            break
+        clear_screen()
 
 if __name__ == "__main__":
     main() 

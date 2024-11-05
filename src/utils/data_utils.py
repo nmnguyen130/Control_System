@@ -36,9 +36,17 @@ def initialize_dataframe(columns, csv_path):
     """
     Khởi tạo DataFrame hoặc đọc dữ liệu từ file CSV nếu đã tồn tại.
     """
-    if os.path.exists(csv_path):
-        return pd.read_csv(csv_path)
-    else:
+    try:
+        if os.path.exists(csv_path):
+            df = pd.read_csv(csv_path)
+            # If file exists but is empty or corrupted, create new DataFrame
+            if df.empty or list(df.columns) != columns:
+                return pd.DataFrame(columns=columns)
+            return df
+        else:
+            return pd.DataFrame(columns=columns)
+    except (pd.errors.EmptyDataError, pd.errors.ParserError):
+        # Handle empty or corrupted CSV files
         return pd.DataFrame(columns=columns)
 
 def save_dataframe_to_csv(df, csv_path):

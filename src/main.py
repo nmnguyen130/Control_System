@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import scrolledtext
 # from core.voice_assistant import VoiceAssistant
-from core.gesture_detector import GestureDetector
+from src.core.gesture_detector import GestureDetector
 import threading
 
 class AssistantApp:

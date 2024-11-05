@@ -41,10 +41,10 @@ class ResidualBlock(nn.Module):
 class EmbeddingModel(nn.Module):
     def __init__(self):
         super(EmbeddingModel, self).__init__()
-        self.fc1 = nn.Linear(63, 256)
-        self.res_block1 = ResidualBlock(256)
-        self.fc2 = nn.Linear(256, 128)
-        self.res_block2 = ResidualBlock(128)
+        self.fc1 = nn.Linear(63, 128)
+        self.res_block1 = ResidualBlock(128)
+        self.fc2 = nn.Linear(128, 256)
+        self.res_block2 = ResidualBlock(256)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
@@ -57,8 +57,8 @@ class EmbeddingModel(nn.Module):
 class ClassificationModel(nn.Module):
     def __init__(self, num_classes):
         super(ClassificationModel, self).__init__()
-        self.fc1 = nn.Linear(128, 64)
-        self.dropout = nn.Dropout(0.4)  # Tăng dropout để chống overfitting
+        self.fc1 = nn.Linear(256, 64)
+        self.dropout = nn.Dropout(0.3)  # Tăng dropout để chống overfitting
         self.fc2 = nn.Linear(64, num_classes)
 
     def forward(self, x):

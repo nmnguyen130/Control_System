@@ -35,35 +35,57 @@ class DynamicGestureDataset(Dataset):
     def __getitem__(self, idx):
         return self.samples[idx], self.labels[idx]
 
-# 2. Dynamic Gesture Model with Attention and Residual Connections
-class DynamicGestureModel(nn.Module):
-    def __init__(self, num_classes, input_dim=63, hidden_dim=128, num_layers=2, dropout=0.5):
-        super(DynamicGestureModel, self).__init__()
-        self.hidden_dim = hidden_dim
-        self.num_layers = num_layers
-
-        # Unidirectional LSTM
+# 2. LSTM Block
+class LSTMBlock(nn.Module):
+    def __init__(self, input_dim, hidden_dim, num_layers, dropout):
+        super(LSTMBlock, self).__init__()
         self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout)
+
+    def forward(self, x):
+        lstm_out, _ = self.lstm(x)
+        return lstm_out
+
+# 3. Attention Block
+class AttentionBlock(nn.Module):
+    def __init__(self, hidden_dim):
+        super(AttentionBlock, self).__init__()
+        self.attention_fc = nn.Linear(hidden_dim, 1)
         
-        # Fully connected layers
+    def forward(self, lstm_out):
+        # Compute attention weights
+        attention_weights = torch.softmax(self.attention_fc(lstm_out), dim=1)
+        
+        # Apply attention weights to LSTM outputs
+        context_vector = torch.sum(attention_weights * lstm_out, dim=1)
+        return context_vector
+    
+# 4. Fully Connected Block
+class FullyConnectedBlock(nn.Module):
+    def __init__(self, hidden_dim, num_classes, dropout=0.5):
+        super(FullyConnectedBlock, self).__init__()
         self.fc1 = nn.Linear(hidden_dim, hidden_dim // 2)
         self.fc2 = nn.Linear(hidden_dim // 2, num_classes)
-        
-        # Dropout and activation
         self.dropout = nn.Dropout(dropout)
         self.relu = nn.ReLU()
 
     def forward(self, x):
-        # LSTM layer
-        lstm_out, _ = self.lstm(x)
-        
-        # Take the output from the last time step
-        last_time_step = lstm_out[:, -1, :]
-        
-        # Apply dropout and fully connected layers
-        out = self.dropout(last_time_step)
-        out = self.relu(self.fc1(out))
-        out = self.dropout(out)
-        out = self.fc2(out)
-        
+        x = self.dropout(x)
+        x = self.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.fc2(x)
+        return x
+
+# 2. Dynamic Gesture Model with Attention and Residual Connections
+class DynamicGestureModel(nn.Module):
+    def __init__(self, num_classes, input_dim=63, hidden_dim=128, num_layers=2, dropout=0.5):
+        super(DynamicGestureModel, self).__init__()
+        self.lstm = LSTMBlock(input_dim, hidden_dim, num_layers, dropout)
+        self.attention = AttentionBlock(hidden_dim)
+        self.fc = FullyConnectedBlock(hidden_dim, num_classes, dropout)
+
+    def forward(self, x):
+        # x shape: (batch_size, sequence_length, 63)
+        lstm_out = self.lstm(x)
+        attention_out = self.attention(lstm_out)
+        out = self.fc(attention_out)
         return out
