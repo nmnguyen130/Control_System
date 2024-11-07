@@ -17,6 +17,10 @@ class StaticGestureDataset(Dataset):
         self.features = torch.tensor(self.features, dtype=torch.float32)
         self.labels = torch.tensor(self.labels, dtype=torch.long)
 
+        # unique_labels, counts = torch.unique(self.labels, return_counts=True)
+        # label_count = dict(zip(unique_labels.tolist(), counts.tolist()))
+        # print("Label counts:", label_count)
+
     def __len__(self):
         return len(self.features)
 

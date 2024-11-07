@@ -145,11 +145,11 @@ def main():
     
     # Setup and train static model
     static_trainer = GestureTrainer(*setup_static_model(label_handler))
-    static_trainer.train(num_epochs=50, save_path='trained_data/static_gesture_model.pth')
+    static_trainer.train(num_epochs=100, save_path='trained_data/static_gesture_model.pth')
 
     # Setup and train dynamic model
-    dynamic_trainer = GestureTrainer(*setup_dynamic_model(label_handler))
-    dynamic_trainer.train(num_epochs=70, save_path='trained_data/dynamic_gesture_model.pth')
+    # dynamic_trainer = GestureTrainer(*setup_dynamic_model(label_handler))
+    # dynamic_trainer.train(num_epochs=70, save_path='trained_data/dynamic_gesture_model.pth')
 
 if __name__ == "__main__":
     main()

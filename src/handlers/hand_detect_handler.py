@@ -3,7 +3,7 @@ import numpy as np
 import mediapipe as mp
 
 class HandDetectHandler:
-    def __init__(self, static_mode=False, num_hands=2, min_detection_confidence=0.5, min_tracking_confidence=0.5):
+    def __init__(self, static_mode=False, num_hands=2, min_detection_confidence=0.7, min_tracking_confidence=0.7):
         """
         Initialize HandDetectHandler with specified parameters.
 
