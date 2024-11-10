@@ -1,14 +1,15 @@
 import os
+import json
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from src.modules.voice_assistant.wakework_dataset import WakeWordData
-from src.modules.voice_assistant.wakework_model import LSTMWakewordModel
+from src.modules.voice_assistant.intent_dataset import IntentDataset
+from src.modules.voice_assistant.intent_model import IntentModel
 from tqdm import tqdm
+from nltk.stem import WordNetLemmatizer
 
-# ERROR: 
 class SpeechTrainer:
     def __init__(self, model, train_loader, val_loader, criterion, optimizer, scheduler=None, device='cpu'):
         self.model = model.to(device)
@@ -18,14 +19,30 @@ class SpeechTrainer:
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.device = device
+        self.best_val_accuracy = 0
 
-    def train_one_epoch(self):
+    def train(self, num_epochs, save_path=None):
+        for epoch in range(num_epochs):
+            train_loss, train_acc = self._train_one_epoch(epoch, num_epochs)
+            val_loss, val_acc = self.validate()
+
+            if self.scheduler:
+                self.scheduler.step(val_loss)
+
+            print(f"Epoch [{epoch + 1}/{num_epochs}] - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%")
+
+            if val_acc > self.best_val_accuracy:
+                self.best_val_accuracy = val_acc
+                if save_path:
+                    self.save_model(save_path)
+                print(f"New best model saved with validation accuracy: {val_acc:.2f}%")
+
+    def _train_one_epoch(self, epoch, num_epochs):
         self.model.train()
-        train_loss = 0
-        correct = 0
-        total = 0
+        total_loss, correct, total = 0.0, 0, 0
+        progress = tqdm(self.train_loader, desc=f"Epoch [{epoch + 1}/{num_epochs}]")
 
-        for data, target in tqdm(self.train_loader, desc="Training"):
+        for data, target in progress:
             data, target = data.to(self.device), target.to(self.device)
 
             self.optimizer.zero_grad()
@@ -34,54 +51,34 @@ class SpeechTrainer:
             loss.backward()
             self.optimizer.step()
 
-            train_loss += loss.item()
+            total_loss += loss.item()
             _, predicted = output.max(1)
             total += target.size(0)
             correct += predicted.eq(target).sum().item()
+            progress.set_postfix(loss=loss.item())
 
-        avg_loss = train_loss / len(self.train_loader)
-        accuracy = 100. * correct / total
+        avg_loss = total_loss / len(self.train_loader)
+        accuracy = 100.0 * correct / total
         return avg_loss, accuracy
 
     def validate(self):
         self.model.eval()
-        val_loss = 0
-        correct = 0
-        total = 0
+        total_loss, correct, total = 0.0, 0, 0
 
         with torch.no_grad():
-            for data, target in tqdm(self.val_loader, desc="Validating"):
+            for data, target in self.val_loader:
                 data, target = data.to(self.device), target.to(self.device)
                 output = self.model(data)
-                val_loss += self.criterion(output, target).item()
-                
+                loss = self.criterion(output, target)
+                total_loss += loss.item()
+
                 _, predicted = output.max(1)
                 total += target.size(0)
                 correct += predicted.eq(target).sum().item()
 
-        avg_loss = val_loss / len(self.val_loader)
-        accuracy = 100. * correct / total
+        avg_loss = total_loss / len(self.val_loader)
+        accuracy = 100.0 * correct / total
         return avg_loss, accuracy
-
-    def train(self, num_epochs, save_path=None):
-        best_val_loss = float('inf')
-
-        for epoch in range(num_epochs):
-            print(f'Epoch {epoch+1}/{num_epochs}')
-            train_loss, train_accuracy = self.train_one_epoch()
-            val_loss, val_accuracy = self.validate()
-
-            print(f'Training Loss: {train_loss:.4f}, Training Accuracy: {train_accuracy:.2f}%')
-            print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.2f}%')
-
-            if self.scheduler:
-                self.scheduler.step(val_loss)
-
-            # Save the best model
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                self.save_model(save_path)
-                print(f'Saved best model to {save_path}')
 
     def save_model(self, file_path):
         try:
@@ -93,21 +90,18 @@ class SpeechTrainer:
     
 def setup_speech_model():
     # Create data loaders
-    train_dataset = WakeWordData(csv_file='data/speech/commands.csv', audio_dir='data/speech', target_length=128)
+    intent_json_path = 'data/speech/intents.json'
+    train_dataset = IntentDataset(intent_json_path)
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
-    # Determine the number of classes
-    num_classes = len(train_dataset.command_to_label)
-    
+    input_size = len(train_dataset.words)
+    output_size = len(train_dataset.intents)
+
     # Initialize model, criterion, optimizer, and scheduler
-    model_params = {
-        "num_classes": 1, "feature_size": 40, "hidden_size": 128,
-        "num_layers": 1, "dropout" :0.1, "bidirectional": False
-    }
-    model = LSTMWakewordModel(**model_params, device='cpu')
+    model = IntentModel(input_size, output_size=output_size)
     criterion = nn.CrossEntropyLoss()
-    optimizer = Adam(model.parameters(), lr=0.001)
-    scheduler = ReduceLROnPlateau(optimizer, 'min', patience=3, verbose=True)
+    optimizer = Adam(model.parameters(), lr=0.01)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
         
     return model, train_loader, criterion, optimizer, scheduler
 
@@ -124,7 +118,7 @@ def main():
         scheduler=scheduler,
         device=device
     )
-    trainer.train(num_epochs=10, save_path='trained_data/wake_word_model.pth')
+    trainer.train(num_epochs=100, save_path='trained_data/intent_model.pth')
 
 if __name__ == '__main__':
     main()

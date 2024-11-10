@@ -37,9 +37,7 @@ class GestureTrainer:
 
     def _train_one_epoch(self, epoch, num_epochs):
         self.model.train()
-        total_loss = 0.0
-        correct = 0
-        total = 0
+        total_loss, correct, total = 0.0, 0, 0
         progress = tqdm(self.train_loader, desc=f"Epoch [{epoch + 1}/{num_epochs}]")
 
         for features, labels in progress:
@@ -52,9 +50,9 @@ class GestureTrainer:
             self.optimizer.step()
 
             total_loss += loss.item()
-            _, predicted = torch.max(outputs, 1)
+            _, predicted = outputs.max(1)
             total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            correct += predicted.eq(labels).sum().item()
             progress.set_postfix(loss=loss.item())
 
         avg_loss = total_loss / len(self.train_loader)
@@ -73,13 +71,12 @@ class GestureTrainer:
                 loss = self.criterion(outputs, labels)
                 total_loss += loss.item()
 
-                _, predicted = torch.max(outputs, 1)
+                _, predicted = outputs.max(1)
                 total += labels.size(0)
-                correct += (predicted == labels).sum().item()
+                correct += predicted.eq(labels).sum().item()
 
         avg_loss = total_loss / len(self.val_loader)
         accuracy = 100.0 * correct / total
-        print(f"Validation - Loss: {avg_loss:.6f}, Accuracy: {accuracy:.2f}%")
         return avg_loss, accuracy
 
     def save_model(self, file_path):
@@ -134,8 +131,8 @@ def setup_dynamic_model(label_handler):
     dynamic_model = DynamicGestureModel(dynamic_num_classes)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(dynamic_model.parameters(), lr=0.001, weight_decay=1e-5)
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5, verbose=True)
+    optimizer = torch.optim.AdamW(dynamic_model.parameters(), lr=0.001, weight_decay=1e-4)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 
     return dynamic_model, train_loader, val_loader, criterion, optimizer, scheduler
 
@@ -144,11 +141,11 @@ def main():
                                  'data/hand_gesture/dynamic_labels.csv')
     
     # Setup and train static model
-    static_trainer = GestureTrainer(*setup_static_model(label_handler))
-    static_trainer.train(num_epochs=100, save_path='trained_data/static_gesture_model.pth')
+    # static_trainer = GestureTrainer(*setup_static_model(label_handler))
+    # static_trainer.train(num_epochs=100, save_path='trained_data/static_gesture_model.pth')
 
     # Setup and train dynamic model
-    # dynamic_trainer = GestureTrainer(*setup_dynamic_model(label_handler))
+    dynamic_trainer = GestureTrainer(*setup_dynamic_model(label_handler))
     # dynamic_trainer.train(num_epochs=70, save_path='trained_data/dynamic_gesture_model.pth')
 
 if __name__ == "__main__":

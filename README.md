@@ -1,18 +1,16 @@
 # Multi-Modal Control System
 
-Dự án Multi-Modal Control System là một hệ thống tích hợp nhiều phương thức tương tác và điều khiển (cử chỉ tay, giọng nói, hành động,...) để tạo ra một hệ thống điều khiển toàn diện cho máy tính hoặc các thiết bị khác. Hệ thống được thiết kế để dễ dàng mở rộng, cho phép tích hợp nhiều module nhận diện và điều khiển khác nhau, giúp người dùng tương tác với thiết bị mà không cần sử dụng chuột hay bàn phím truyền thống.
+Dự án Multi-Modal Control System là một hệ thống tích hợp nhiều phương thức tương tác và điều khiển (cử chỉ tay, giọng nói, hành động,...) để tạo ra một hệ thống điều khiển toàn diện cho máy tính. Hệ thống được thiết kế để dễ dàng mở rộng, cho phép tích hợp nhiều module nhận diện và điều khiển khác nhau, giúp người dùng tương tác với thiết bị mà không cần sử dụng chuột hay bàn phím truyền thống.
 
 ## Chức Năng Chính
 
-- **Điều khiển bằng cử chỉ (Gesture Control)**:
+- **Điều khiển bằng Cử Chỉ (Gesture Control)**:
   - Di chuyển chuột.
   - Click trái/phải, cuộn trang.
-  - Thao tác hệ thống (mở ứng dụng, điều chỉnh âm lượng, tắt/mở màn hình).
   - Chuyển đổi cửa sổ.
-  - Thao tác copy/paste.
-- **Điều khiển bằng giọng nói (Voice Control)**:
+- **Điều khiển bằng Giọng Nói (Voice Control)**:
   - Nhận diện và ánh xạ lệnh giọng nói thành hành động.
-  - Phân tích ngữ nghĩa
+  - Phân tích ngữ nghĩa.
   - Thao tác hệ thống (mở/đóng ứng dụng, chuyển đổi cửa sổ).
 
 ## Phát Triển Module Chính
@@ -21,10 +19,7 @@ Dự án Multi-Modal Control System là một hệ thống tích hợp nhiều p
 
 - Nhận diện các cử chỉ đặc trưng (VD: nắm tay, giơ ngón cái, mở bàn tay).
 - Theo dõi vị trí bàn tay theo thời gian thực.
-
-### Module Ánh Xạ Cử Chỉ -> Hành Động (Gesture-to-Action Mapping)
-
-- Định nghĩa hành vi của hệ thống dựa trên cử chỉ (VD: nắm tay để di chuyển chuột, giơ ngón cái để click chuột).
+- Định nghĩa hành vi của hệ thống dựa trên cử chỉ (VD: nắm tay để di chuyển chuột, giơ ngón trỏ để click chuột...).
 
 ### Module Nhận Diện Giọng Nói (Voice Recognition Module)
 
@@ -61,7 +56,6 @@ Dự án Multi-Modal Control System là một hệ thống tích hợp nhiều p
 - **MediaPipe**: Thu thập điểm landmarks của bàn tay.
 - **Flask**: Framework để xây dựng API và giao diện người dùng.
 - **SpeechRecognition**: Thư viện để nhận diện giọng nói từ âm thanh.
-- **pydub**: Thư viện để xử lý âm thanh, bao gồm cắt, ghép và chuyển đổi định dạng âm thanh.
 
 2. Ghi các thư viện đã cài đặt vào requirements.txt
    ```bash
@@ -81,6 +75,16 @@ Dự án Multi-Modal Control System là một hệ thống tích hợp nhiều p
    ```bash
    pip install -r requirements.txt
    ```
+
+## Chạy chương trình
+
+Để chạy ứng dụng, hãy thực hiện lệnh sau trong terminal:
+
+```bash
+python -m run
+```
+
+Lệnh này sẽ hiển thị một menu để chọn mô-đun cần chạy, bao gồm các tùy chọn cho nhận dạng cử chỉ, thu thập giọng nói và nhiều hơn nữa.
 
 ## Cấu Trúc Thư Mục Dự Án Multi-Modal Control System
 

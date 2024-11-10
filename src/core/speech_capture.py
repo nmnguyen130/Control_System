@@ -220,4 +220,4 @@ class SpeechDataCollector:
 
 if __name__ == "__main__":
     collector = SpeechDataCollector()
-    collector.run() 
+    collector.run()

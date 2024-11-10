@@ -8,7 +8,8 @@ MODULES = {
     '4': 'src.core.gesture_trainer',
     '5': 'src.core.gesture_detector',
     '6': 'src.core.speech_capture',
-    '7': 'src.core.speech_trainer'
+    '7': 'src.core.speech_trainer',
+    '8': 'src.core.speech_listener',
 }
 
 def print_modules():

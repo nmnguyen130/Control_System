@@ -1,12 +1,13 @@
-mediapipe
-opencv-python
-scikit-learn
 pandas
 numpy
+opencv-python
+mediapipe
+scikit-learn
 torch
-librosa
 tqdm
+nltk
 SpeechRecognition
 pyttsx3
 pyautogui
 pyaudio
+pycaw
