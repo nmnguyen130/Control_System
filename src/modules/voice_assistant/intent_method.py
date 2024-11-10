@@ -12,6 +12,7 @@ class IntentMethod:
         self.audio_control = AudioControl()
 
         self.method_mappings = {
+            "greeting": lambda: self.get_random_response("greeting"),
             "web_search": self.web_search,
             "open_browser": lambda: self.open_application("browser"),
             "open_calculator": lambda: self.open_application("calculator"),
@@ -28,13 +29,15 @@ class IntentMethod:
             "decrease_volume": self.audio_control.decrease_volume,
             "mute_audio": self.audio_control.mute,
             "unmute_audio": self.audio_control.unmute,
+            "goodbye": lambda: self.get_random_response("goodbye"),
             "help": self.show_help,
-            "show_history": self.show_history,
+            "history": self.show_history,
             "input_text": self.input_text,
         }
         self.command_history = []
         
     def handle_intent(self, intent_tag, text=None):
+        print(intent_tag)
         # Check if the intent tag has a mapped method and call it
         if intent_tag in self.method_mappings:
             if intent_tag in ["web_search", "input_text"]:

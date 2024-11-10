@@ -7,7 +7,8 @@ from src.modules.voice_assistant.intent_model import IntentModel
 from src.modules.voice_assistant.intent_method import IntentMethod
 
 class SpeechListener:
-    def __init__(self, model_path='trained_data/intent_model.pth', device='cpu'):
+    def __init__(self, add_message_callback, model_path='trained_data/intent_model.pth', device='cpu'):
+        self.add_message = add_message_callback
         self.recognizer = sr.Recognizer()
         self.intent_dataset = IntentDataset('data/speech/intents.json')
         self.words, self.intents = self.intent_dataset.get_words_and_intents()
@@ -33,9 +34,9 @@ class SpeechListener:
                 try:
                     audio = self.recognizer.listen(source, timeout=5)
                     text = self.recognizer.recognize_google(audio)
-                    print(f"You said: {text}")
+                    self.add_message("You", text)
                     intent_response = self.process_input(text)
-                    print(f"Predicted intent: {intent_response}")
+                    self.add_message("AI", f"{intent_response}")
                 except sr.WaitTimeoutError:
                     continue
                 except sr.UnknownValueError:
@@ -45,7 +46,6 @@ class SpeechListener:
 
     def process_input(self, input_text):
         predicted_intent = self._predict_intent(input_text)
-        print(predicted_intent)
 
         try:
             response = self.intent_method.handle_intent(predicted_intent, input_text)
@@ -80,8 +80,12 @@ class SpeechListener:
         self.is_listening = False
         print("Stopped listening.")
 
+# Example usage of SpeechListener
+def add_message(speaker, message):
+    print(f"{speaker}: {message}")
+
 def main():
-    speech_listener = SpeechListener()
+    speech_listener = SpeechListener(add_message)
     try:
         speech_listener.start_listening()
     except KeyboardInterrupt:
