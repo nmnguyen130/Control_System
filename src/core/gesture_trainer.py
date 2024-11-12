@@ -1,91 +1,18 @@
-import os
 import torch
 import torch.nn as nn
-from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from sklearn.model_selection import train_test_split
 from src.modules.gesture_detection import *
 from src.handlers.gesture_label_handler import GestureLabelHandler
+from src.core.base_trainer import BaseTrainer
 
-class GestureTrainer:
+class GestureTrainer(BaseTrainer):
     def __init__(self, model, train_loader, val_loader, criterion, optimizer, scheduler=None, device='cpu'):
-        self.model = model.to(device)
-        self.train_loader = train_loader
-        self.val_loader = val_loader
-        self.criterion = criterion
-        self.optimizer = optimizer
-        self.scheduler = scheduler
-        self.device = device
-        self.best_val_accuracy = 0
+        super().__init__(model, train_loader, val_loader, criterion, optimizer, scheduler, device)
 
-    def train(self, num_epochs=50, save_path=None):
-        for epoch in range(num_epochs):
-            train_loss, train_acc = self._train_one_epoch(epoch, num_epochs)
-            val_loss, val_acc = self.evaluate()
-
-            if self.scheduler:
-                self.scheduler.step(val_loss)
-
-            print(f"Epoch [{epoch + 1}/{num_epochs}] - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%")
-
-            if val_acc > self.best_val_accuracy:
-                self.best_val_accuracy = val_acc
-                if save_path:
-                    self.save_model(save_path)
-                print(f"New best model saved with validation accuracy: {val_acc:.2f}%")
-
-    def _train_one_epoch(self, epoch, num_epochs):
-        self.model.train()
-        total_loss, correct, total = 0.0, 0, 0
-        progress = tqdm(self.train_loader, desc=f"Epoch [{epoch + 1}/{num_epochs}]")
-
-        for features, labels in progress:
-            features, labels = features.to(self.device), labels.to(self.device)
-
-            self.optimizer.zero_grad()
-            outputs = self.model(features)
-            loss = self.criterion(outputs, labels)
-            loss.backward()
-            self.optimizer.step()
-
-            total_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += labels.size(0)
-            correct += predicted.eq(labels).sum().item()
-            progress.set_postfix(loss=loss.item())
-
-        avg_loss = total_loss / len(self.train_loader)
-        accuracy = 100.0 * correct / total
-        return avg_loss, accuracy
-
-    def evaluate(self):
-        self.model.eval()
-        total_loss, correct, total = 0.0, 0, 0
-
-        with torch.no_grad():
-            for features, labels in self.val_loader:
-                features, labels = features.to(self.device), labels.to(self.device)
-
-                outputs = self.model(features)
-                loss = self.criterion(outputs, labels)
-                total_loss += loss.item()
-
-                _, predicted = outputs.max(1)
-                total += labels.size(0)
-                correct += predicted.eq(labels).sum().item()
-
-        avg_loss = total_loss / len(self.val_loader)
-        accuracy = 100.0 * correct / total
-        return avg_loss, accuracy
-
-    def save_model(self, file_path):
-        try:
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            torch.save(self.model.state_dict(), file_path)
-            print(f"Model saved to {file_path}")
-        except Exception as e:
-            print(f"Failed to save model: {e}")
+    def train(self, num_epochs=50, save_path=None, model_type=None):
+        super().train(num_epochs, save_path, model_type)
 
     def _unpack_batch(self, batch):
         features, labels = batch
@@ -142,11 +69,11 @@ def main():
     
     # Setup and train static model
     # static_trainer = GestureTrainer(*setup_static_model(label_handler))
-    # static_trainer.train(num_epochs=100, save_path='trained_data/static_gesture_model.pth')
+    # static_trainer.train(num_epochs=100, save_path='trained_data/static_gesture_model.pth', model_type='static')
 
     # Setup and train dynamic model
     dynamic_trainer = GestureTrainer(*setup_dynamic_model(label_handler))
-    # dynamic_trainer.train(num_epochs=70, save_path='trained_data/dynamic_gesture_model.pth')
+    dynamic_trainer.train(num_epochs=70, save_path='trained_data/dynamic_gesture_model.pth', model_type='dynamic')
 
 if __name__ == "__main__":
     main()
