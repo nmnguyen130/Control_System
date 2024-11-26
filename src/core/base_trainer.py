@@ -38,7 +38,7 @@ class BaseTrainer:
             if val_acc > self.best_val_accuracy:
                 self.best_val_accuracy = val_acc
                 if save_path:
-                    self.save_model(save_path)
+                    self.save_model(save_path, model_type)
                 print(f"New best {model_type} model saved with validation accuracy: {val_acc:.2f}%")
 
             # After training, plot the results

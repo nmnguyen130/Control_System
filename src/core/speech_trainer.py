@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from torch.optim import Adam
+from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from src.modules.voice_assistant.intent_dataset import IntentDataset
 from src.modules.voice_assistant.intent_model import IntentModel
@@ -26,7 +26,7 @@ def setup_speech_model():
     # Initialize model, criterion, optimizer, and scheduler
     model = IntentModel(input_size, output_size=output_size)
     criterion = nn.CrossEntropyLoss()
-    optimizer = Adam(model.parameters(), lr=0.01)
+    optimizer = AdamW(model.parameters(), lr=0.01, weight_decay=1e-3)
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
         
     return model, train_loader, criterion, optimizer, scheduler

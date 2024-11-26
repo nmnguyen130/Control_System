@@ -68,8 +68,8 @@ def main():
                                  'data/hand_gesture/dynamic_labels.csv')
     
     # Setup and train static model
-    # static_trainer = GestureTrainer(*setup_static_model(label_handler))
-    # static_trainer.train(num_epochs=100, save_path='trained_data/static_gesture_model.pth', model_type='static')
+    static_trainer = GestureTrainer(*setup_static_model(label_handler))
+    static_trainer.train(num_epochs=50, save_path='trained_data/static_gesture_model.pth', model_type='static')
 
     # Setup and train dynamic model
     dynamic_trainer = GestureTrainer(*setup_dynamic_model(label_handler))
